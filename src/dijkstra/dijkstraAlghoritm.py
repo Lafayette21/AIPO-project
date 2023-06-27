@@ -2,9 +2,7 @@ import sys
 
 
 def check_if_is_in_target(vertex, target):
-    if vertex == target:
-        return True
-    return False
+        return vertex == target
 
 
 def update_distances(graph, distances, min_vertex):
