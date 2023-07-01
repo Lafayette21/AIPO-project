@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import threading
 import networkx as nx
+import time
 
 #urzywa obraz o wartościach 0 dla tła i 1 dla drug i skrzyrzoań
 #zwraca obraz z osobną wartością dla karzdej drogi i skrzyrzoania oraz listy które wartości to skrzyrzowania a które to drogi
@@ -15,6 +16,7 @@ class RoadsIntersectionsDetecotr:
         self.graph_lock = threading.Lock()
         self.roads_list = []
         self.intersections_list = []
+        self.roads_not_connected = {}
 
         indexes = [np.argwhere(image == 1)[0]]
         nodeName = f"{self.iterator}"
@@ -39,6 +41,9 @@ class RoadsIntersectionsDetecotr:
         neighbor_lists=[[]]
         road_end=False
 
+        road_length = 0
+        road_area = len(indexes)
+
         while len(neighbor_lists)==1:
             indexes2 = set([])
             for (x, y) in indexes:
@@ -47,6 +52,8 @@ class RoadsIntersectionsDetecotr:
             if indexes2:
                 indexes = indexes2
                 neighbor_lists = self.divide_into_neighbor_lists(indexes)
+                road_length+=1
+                road_area+=len(indexes)
             else: 
                 road_end = True
                 break
@@ -64,25 +71,34 @@ class RoadsIntersectionsDetecotr:
                     if value == max([*neighbours_values, value]):
                         pos = self.color_intersection(neighbours.copy(), intersection_id)
                         with self.graph_lock:
-                            self.graph.add_node(nodeName, pos=pos)
-                            self.graph.add_edge(startNodeName, nodeName)
-                        #     for node in neighbours_values:
-                        #         self.graph.add_edge(f"{node}", nodeName)
-                        print(neighbours_values)
+                            self.graph.add_node(nodeName, pos=pos, color = [intersection_id])
+                            self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
+                        for _ in range(10):
+                            time.sleep(0.1)
+                            for f_value in neighbours_values:
+                                if f_value in self.roads_not_connected:
+                                    with self.graph_lock:
+                                        self.graph.add_edge(nodeName, self.roads_not_connected[f_value]["name"]
+                                                            , length = self.roads_not_connected[f_value]["len"]
+                                                            , area = self.roads_not_connected[f_value]["area"])
+                                        self.roads_not_connected.pop(f_value)
                     else:
-                        print(neighbours_values)
+                        self.roads_not_connected[value] = {}
+                        self.roads_not_connected[value]["name"] = startNodeName
+                        self.roads_not_connected[value]["len"] = road_length
+                        self.roads_not_connected[value]["area"] = road_area
                 else:
                     print("---",neighbours_values)
                     print(self.intersections_list)
             else:
                 pos = self.color_intersection(neighbours.copy(), intersection_id)
                 with self.graph_lock:
-                    self.graph.add_node(nodeName, pos=pos)
-                    self.graph.add_edge(startNodeName, nodeName)
+                    self.graph.add_node(nodeName, pos=pos, color = [intersection_id])
+                    self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
         else:
             with self.graph_lock:
-                self.graph.add_node(nodeName)
-                self.graph.add_edge(startNodeName, nodeName)
+                self.graph.add_node(nodeName, color = [intersection_id])
+                self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
         
             for sub_indexes in neighbor_lists:
                 thread = threading.Thread(target=self.color_road, args=(set(sub_indexes.copy()), self.iterator, nodeName))
@@ -107,8 +123,14 @@ class RoadsIntersectionsDetecotr:
         radius = max(max_x - average_x, max_y - average_y, average_x - min_x, average_y- min_y)
 
         center = (int(average_y), int(average_x))
-        cv2.circle(self.image, center, int(radius), value, thickness=-1)
+        thread = threading.Thread(target=self.drow_circle_with_delay, args=(center,radius,value))
+        thread.start()
+        self.thread_list.append(thread)
         return center
+
+    def drow_circle_with_delay(self, center, radius, value):
+        time.sleep(0.1)
+        cv2.circle(self.image, center, int(radius), value, thickness=-1)
 
     def find_neighbors_with_value(self, pixel, value):
         x, y = pixel
@@ -155,13 +177,29 @@ _, obraz = cv2.threshold(obraz, 128, 1, cv2.THRESH_BINARY)
 obraz = 1-obraz
 obraz2 = np.array(obraz)
 
-unThresholder = RoadsIntersectionsDetecotr()
-obraz2 = unThresholder.run(obraz2)
+detector = RoadsIntersectionsDetecotr()
+obraz2 = detector.run(obraz2)
+
+# for node in detector.graph.nodes:
+#     try:
+#         print(detector.graph.nodes[node]['color'])
+#     except:
+#         pass
 
 plt.subplot(1,2,1)
 plt.imshow(obraz, cmap='gray')
 plt.subplot(1,2,2)
-node_positions = nx.get_node_attributes(unThresholder.graph, 'pos')
-nx.draw(unThresholder.graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+node_positions = nx.get_node_attributes(detector.graph, 'pos')
+nx.draw(detector.graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+
+for edge in detector.graph.edges:
+    edge_length = detector.graph.edges[edge]['length']
+    x = (node_positions[edge[0]][0] + node_positions[edge[1]][0]) / 2  # x-coordinate for text position
+    y = (node_positions[edge[0]][1] + node_positions[edge[1]][1]) / 2  # y-coordinate for text position
+    plt.text(x, y, str(edge_length), color='white', fontsize=10, ha='center', va='center')
+
 plt.imshow(obraz2, cmap='cubehelix')
 plt.show()
+
+#nodes : {pos , color:[]}
+#edges : {length , area, color:[]}
