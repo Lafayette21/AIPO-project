@@ -1,15 +1,11 @@
 from tkinter import Tk
 
-from src.gui.mapview import MapViewer
+from .application import Application
 
 
 def run():
-    root = Tk()
-    root.title("GPS application")
-    root.geometry("1000x800")
-    root.resizable(width=False, height=False)
-    root.update()
-
-    MapViewer(root).initialise()
-
-    root.mainloop()
+    app = Application()
+    app.title("GPS application")
+    app.geometry("1000x800")
+    app.initialise()
+    app.mainloop()
