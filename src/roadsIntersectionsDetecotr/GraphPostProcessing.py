@@ -13,6 +13,15 @@ class GraphPostProcessor:
                     self.merge_nodes(edge)
                     cont = True
                     break
+        
+        cont = True
+        while cont:
+            cont = False
+            for node in self.graph.nodes:
+                if len(self.graph[node])==2:
+                    self.remove_node(node)
+                    cont = True
+                    break
 
         return self.graph
     
@@ -43,10 +52,18 @@ class GraphPostProcessor:
         self.graph.remove_node(edge[0])
         self.graph.remove_node(edge[1])
 
-        # Add edges from the original graph that are connected to either of the merged nodes
-        # for neighbor in G.neighbors(node1):
-        #     if neighbor != node2:
-        #         merged_graph.add_edge(merged_node, neighbor)
-        # for neighbor in G.neighbors(node2):
-        #     if neighbor != node1:
-        #         merged_graph.add_edge(merged_node, neighbor)
+    def remove_node(self, node):
+        length = 0
+        area=0
+        color=[]
+        edge_nodes = []
+        for edge in self.graph[node]:
+            edge_data = self.graph[node][edge]
+            length+=edge_data["length"]
+            area+=edge_data["area"]
+            color.extend(edge_data["color"])
+            edge_nodes.append(edge)
+        color.extend(self.graph.nodes[node]["color"])
+        
+        self.graph.remove_node(node)
+        self.graph.add_edge(edge_nodes[0],edge_nodes[1], length=length, area=area, color=color)
