@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import threading
 import networkx as nx
 import time
+from GraphPostProcessing import GraphPostProcessor
 
 #urzywa obraz o wartościach 0 dla tła i 1 dla drug i skrzyrzoań
 #zwraca obraz z osobną wartością dla karzdej drogi i skrzyrzoania oraz listy które wartości to skrzyrzowania a które to drogi
@@ -23,7 +24,7 @@ class RoadsIntersectionsDetecotr:
         self.intersections_list.append(self.iterator)
         self.iterator+=1
         with self.graph_lock:
-            self.graph.add_node(nodeName, pos=(indexes[0][1], indexes[0][0]))
+            self.graph.add_node(nodeName, pos=(indexes[0][1], indexes[0][0]), color=[nodeName], radius=1)
 
         thread = threading.Thread(target=self.color_road, args=(indexes, self.iterator, nodeName))
         self.iterator+=1
@@ -69,18 +70,19 @@ class RoadsIntersectionsDetecotr:
             if neighbours_values:
                 if all(elem in self.roads_list for elem in neighbours_values):
                     if value == max([*neighbours_values, value]):
-                        pos = self.color_intersection(neighbours.copy(), intersection_id)
+                        pos, radius = self.color_intersection(neighbours.copy(), intersection_id)
                         with self.graph_lock:
-                            self.graph.add_node(nodeName, pos=pos, color = [intersection_id])
-                            self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
+                            self.graph.add_node(nodeName, pos=pos, color = [intersection_id], radius=radius)
+                            self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area, color = [value])
                         for _ in range(10):
                             time.sleep(0.1)
                             for f_value in neighbours_values:
                                 if f_value in self.roads_not_connected:
                                     with self.graph_lock:
-                                        self.graph.add_edge(nodeName, self.roads_not_connected[f_value]["name"]
-                                                            , length = self.roads_not_connected[f_value]["len"]
-                                                            , area = self.roads_not_connected[f_value]["area"])
+                                        self.graph.add_edge(nodeName, self.roads_not_connected[f_value]["name"], 
+                                                            length = self.roads_not_connected[f_value]["len"],
+                                                            area = self.roads_not_connected[f_value]["area"], 
+                                                            color = [f_value])
                                         self.roads_not_connected.pop(f_value)
                     else:
                         self.roads_not_connected[value] = {}
@@ -91,14 +93,14 @@ class RoadsIntersectionsDetecotr:
                     print("---",neighbours_values)
                     print(self.intersections_list)
             else:
-                pos = self.color_intersection(neighbours.copy(), intersection_id)
+                pos, radius = self.color_intersection(neighbours.copy(), intersection_id)
                 with self.graph_lock:
-                    self.graph.add_node(nodeName, pos=pos, color = [intersection_id])
-                    self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
+                    self.graph.add_node(nodeName, pos=pos, color = [intersection_id], radius=radius)
+                    self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area, color = [value])
         else:
             with self.graph_lock:
                 self.graph.add_node(nodeName, color = [intersection_id])
-                self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area)
+                self.graph.add_edge(startNodeName, nodeName, length = road_length, area = road_area, color = [value])
         
             for sub_indexes in neighbor_lists:
                 thread = threading.Thread(target=self.color_road, args=(set(sub_indexes.copy()), self.iterator, nodeName))
@@ -106,9 +108,10 @@ class RoadsIntersectionsDetecotr:
                 thread.start()
                 self.thread_list.append(thread)
 
-            pos = self.color_intersection(indexes.copy(), intersection_id)
+            pos, radius = self.color_intersection(indexes.copy(), intersection_id)
             with self.graph_lock:
                 self.graph.nodes[nodeName]['pos'] = pos
+                self.graph.nodes[nodeName]['radius'] = radius
 
 
     def color_intersection(self, indexes, value):
@@ -120,17 +123,20 @@ class RoadsIntersectionsDetecotr:
         min_y = min(point[1] for point in indexes)
         max_y = max(point[1] for point in indexes)
 
-        radius = max(max_x - average_x, max_y - average_y, average_x - min_x, average_y- min_y)
+        radius = int(max(max_x - average_x, max_y - average_y, average_x - min_x, average_y- min_y))
 
         center = (int(average_y), int(average_x))
-        thread = threading.Thread(target=self.drow_circle_with_delay, args=(center,radius,value))
-        thread.start()
-        self.thread_list.append(thread)
-        return center
+
+        cv2.circle(self.image, center, radius, value, thickness=-1)
+        # thread = threading.Thread(target=self.drow_circle_with_delay, args=(center,radius,value))
+        # thread.start()
+        # self.thread_list.append(thread)
+
+        return (center, radius)
 
     def drow_circle_with_delay(self, center, radius, value):
         time.sleep(0.1)
-        cv2.circle(self.image, center, int(radius), value, thickness=-1)
+        cv2.circle(self.image, center, radius, value, thickness=-1)
 
     def find_neighbors_with_value(self, pixel, value):
         x, y = pixel
@@ -180,20 +186,38 @@ obraz2 = np.array(obraz)
 detector = RoadsIntersectionsDetecotr()
 obraz2 = detector.run(obraz2)
 
-# for node in detector.graph.nodes:
+# for node in graph.nodes:
 #     try:
-#         print(detector.graph.nodes[node]['color'])
+#         print(graph.nodes[node]['color'])
 #     except:
 #         pass
 
-plt.subplot(1,2,1)
-plt.imshow(obraz, cmap='gray')
-plt.subplot(1,2,2)
-node_positions = nx.get_node_attributes(detector.graph, 'pos')
-nx.draw(detector.graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+graph = detector.graph
 
-for edge in detector.graph.edges:
-    edge_length = detector.graph.edges[edge]['length']
+plt.subplot(2,2,1)
+plt.imshow(obraz, cmap='gray')
+
+plt.subplot(2,2,2)
+node_positions = nx.get_node_attributes(graph, 'pos')
+nx.draw(graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+
+for edge in graph.edges:
+    edge_length = graph.edges[edge]['length']
+    x = (node_positions[edge[0]][0] + node_positions[edge[1]][0]) / 2  # x-coordinate for text position
+    y = (node_positions[edge[0]][1] + node_positions[edge[1]][1]) / 2  # y-coordinate for text position
+    plt.text(x, y, str(edge_length), color='white', fontsize=10, ha='center', va='center')
+
+plt.imshow(obraz2, cmap='cubehelix')
+
+graphPostProcessor = GraphPostProcessor()
+graph = graphPostProcessor.run(detector.graph)
+
+plt.subplot(2,2,3)
+node_positions = nx.get_node_attributes(graph, 'pos')
+nx.draw(graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+
+for edge in graph.edges:
+    edge_length = graph.edges[edge]['length']
     x = (node_positions[edge[0]][0] + node_positions[edge[1]][0]) / 2  # x-coordinate for text position
     y = (node_positions[edge[0]][1] + node_positions[edge[1]][1]) / 2  # y-coordinate for text position
     plt.text(x, y, str(edge_length), color='white', fontsize=10, ha='center', va='center')
@@ -201,5 +225,5 @@ for edge in detector.graph.edges:
 plt.imshow(obraz2, cmap='cubehelix')
 plt.show()
 
-#nodes : {pos , color:[]}
+#nodes : {pos, radius , color:[]}
 #edges : {length , area, color:[]}
