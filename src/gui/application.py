@@ -69,7 +69,7 @@ class Application(Tk):
 
         self.map_widget = tkintermapview.TkinterMapView(self.frame1)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
-        self.map_widget.bind("<Button-3>", self.right_click_map)  # bind right click event to the map widget
+        self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker_on_map, pass_coords=True)
         self.map_widget.grid(row=0, column=1, rowspan=3, sticky='nsew')
 
         self.button4 = Button(self.frame2, text='Navigate', command=self.navigate_image)
@@ -86,10 +86,7 @@ class Application(Tk):
         self.canvas.bind("<Button-3>", self.right_click_image)
         self.image_on_canvas = None
         self.photo = None
-    def right_click_map(self, event):
-        # get the pixel coordinates from the event
-        print("Right click on the map at:")
-        # here you can add the marker placement logic
+
     def reset_map(self):
         if hasattr(self, 'image_label'):
             self.image_label.grid_forget()
