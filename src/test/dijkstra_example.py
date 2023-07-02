@@ -1,6 +1,7 @@
 import networkx as nx
 
 # Tworzenie grafu
+from src.dijkstra.Colors import get_combined_color_list
 from src.dijkstra.updateGraphLenth import update_edge_lengths
 from src.dijkstra.dijkstraAlghoritm import dijkstra
 
@@ -24,11 +25,14 @@ graph.add_edge('D', 'E', length=4, area=8, color=['white'])
 
 # Wywołanie algorytmu Dijkstry
 start_node = 'A'
-target_node = 'D'
+target_node = 'C'
 update_edge_lengths(graph)
 shortest_distance, shortest_path, path_colors = dijkstra(graph, start_node, target_node)
+
+combined_color_list = get_combined_color_list(graph, shortest_path, path_colors)
 
 # Wyświetlanie wyników
 print(f"Najkrótsza odległość od wierzchołka {start_node} do wierzchołka {target_node}: {shortest_distance}")
 print("Najkrótsza ścieżka:", shortest_path)
 print("Kolory ścieżek:", path_colors)
+print("Kolory:", combined_color_list)
