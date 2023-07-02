@@ -1,39 +1,48 @@
 import sys
 
 
-def check_if_is_in_target(vertex, target):
-        return vertex == target
-
-
-def update_distances(graph, distances, min_vertex):
-    for neighbor, weight in graph[min_vertex].items():
-        distance = distances[min_vertex] + weight
-        if distance < distances[neighbor]:
-            distances[neighbor] = distance
-
-
 def dijkstra(graph, start, target):
-    distances = {vertex: sys.maxsize for vertex in graph}
+    distances = {node: sys.maxsize for node in graph.nodes}
     distances[start] = 0
-    visited = []
+    visited = set()
+    previous_vertices = {}
+    path_colors = {}
 
-    while len(visited) < len(graph):
+    while len(visited) < len(graph.nodes):
         min_distance = sys.maxsize
-        min_vertex = None
+        min_node = None
 
         # Wybieranie wierzchołka o najmniejszej odległości spośród nieodwiedzonych
-        for vertex in graph:
-            if vertex not in visited and distances[vertex] < min_distance:
-                min_distance = distances[vertex]
-                min_vertex = vertex
+        for node in graph.nodes:
+            if node not in visited and distances[node] < min_distance:
+                min_distance = distances[node]
+                min_node = node
 
-        # Dodanie odwiedzonego wierzchołka do listy
-        visited.append(min_vertex)
+        # Dodanie odwiedzonego wierzchołka do zbioru
+        visited.add(min_node)
 
-        if check_if_is_in_target(min_vertex, target):
-            return distances[target]
+        # Aktualizacja odległości dla sąsiadów
+        for neighbor in graph.neighbors(min_node):
+            edge_length = graph[min_node][neighbor]['length']
+            edge_area = graph[min_node][neighbor]['area']
+            distance = distances[min_node] + edge_length
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_vertices[neighbor] = min_node
+                path_colors[neighbor] = graph[min_node][neighbor]['color']
 
-        if min_vertex is not None:
-            update_distances(graph, distances, min_vertex)
+    path = []
+    current_node = target
+    while current_node != start:
+        path.insert(0, current_node)
+        current_node = previous_vertices[current_node]
+    path.insert(0, start)
 
-    return distances[target]
+    colors = []
+    for i in range(len(path) - 1):
+        source = path[i]
+        target = path[i + 1]
+        edge_color = path_colors[target]
+        colors.extend(edge_color)
+
+    return distances[target], path, colors
