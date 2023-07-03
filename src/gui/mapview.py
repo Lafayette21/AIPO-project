@@ -1,13 +1,13 @@
-from tkinter import Tk, Button, messagebox
+from tkinter import Button, messagebox, Frame
 
 import tkintermapview
 from tkintermapview.canvas_position_marker import CanvasPositionMarker
 
-from src.model.point import Point
-from src.model.point_constats import point_constants
+from src.gui.point import Point
+from src.gui.point_constats import point_constants
 
 
-class MapViewer:
+class MapViewer(Frame):
     INITIALIZATION_POINT: Point = point_constants["Cracow"]
 
     map_widget: tkintermapview.TkinterMapView
@@ -16,22 +16,26 @@ class MapViewer:
     end_marker: CanvasPositionMarker
     number_of_markers: int = 0
 
-    def __init__(self, root: Tk):
-        self.root = root
+    def __init__(self):
+        super().__init__()
+        self._initialise()
 
-    def initialise(self) -> None:
+    def _initialise(self) -> None:
         self.__initialize_map_widget()
 
-        find_navigation_button = Button(self.root, text="Navigate", command=self.create_route)
+        find_navigation_button = Button(self, text="Navigate", command=self.create_route)
         find_navigation_button.grid(row=0, column=0)
 
-        clear_markers_button = Button(self.root, text="Clear markers", command=self.clear_all_markers)
+        clear_markers_button = Button(self, text="Clear markers", command=self.clear_all_markers)
         clear_markers_button.grid(row=1, column=0)
 
+        reset_map_button = Button(self, text='Reset map', command=self.reset_map)
+        reset_map_button.grid(row=2, column=0)
+
     def __initialize_map_widget(self):
-        self.map_widget = tkintermapview.TkinterMapView(self.root,
-                                                        width=self.__get_90_percent_of(self.root.winfo_width()),
-                                                        height=self.__get_90_percent_of(self.root.winfo_height()))
+        self.map_widget = tkintermapview.TkinterMapView(self,
+                                                        width=900,
+                                                        height=600)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
         self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker,
                                                      pass_coords=True)
@@ -67,3 +71,11 @@ class MapViewer:
         else:
             # TODO Here implement the login for creating route between two points
             print("Success")
+
+    def reset_map(self):
+        print("elo")
+        self.map_widget = tkintermapview.TkinterMapView(self)
+        self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
+        self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker,
+                                                     pass_coords=True)
+        self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
