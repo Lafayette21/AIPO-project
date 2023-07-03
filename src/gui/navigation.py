@@ -19,7 +19,7 @@ class Navigation:
         drawer = ImageDraw.Draw(output_image_pil)
 
         self._draw_point(start_point, drawer)
-        self._draw_point(start_point, drawer)
+        self._draw_point(end_point, drawer)
 
         return output_image_pil
 
