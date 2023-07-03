@@ -6,3 +6,6 @@ class Point:
     @staticmethod
     def empty_point(self):
         self.__init__(0, 0)
+
+    def __str__(self):
+        return f"Point: x={self.x}, y={self.y}"
