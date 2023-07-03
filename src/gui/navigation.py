@@ -1,7 +1,9 @@
 import cv2
 from PIL import Image, ImageDraw
+import numpy as np
 
 from binarizer.binarizer import Binarizer
+from roadsIntersectionsDetecotr.RoadsIntersectionsDetecotr import RoadsIntersectionsDetecotr
 
 from .point import Point
 
@@ -14,7 +16,14 @@ class Navigation:
 
     def navigate(self, image, start_point: Point, end_point: Point):
         binary_image = self.binarizer.binarize(image)
-        output_image_pil = self._convert_to_pil(binary_image)
+        _, binary_image = cv2.threshold(binary_image, 128, 1, cv2.THRESH_BINARY)
+        binary_image = np.array(binary_image,  dtype=np.int32)
+        detector = RoadsIntersectionsDetecotr(binary_image)
+        detector.run()
+        image_to_drow = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        new_image = detector.draw_navigation(start_point.as_tuple(), end_point.as_tuple(), image_to_drow)
+
+        output_image_pil = self._convert_to_pil(new_image)
 
         drawer = ImageDraw.Draw(output_image_pil)
 

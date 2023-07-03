@@ -9,7 +9,7 @@ class GraphPostProcessor:
         while cont:
             cont = False
             for edge in self.graph.edges:
-                if self.graph.nodes[edge[0]]['radius']+self.graph.nodes[edge[1]]['radius']>self.graph.edges[edge]['length']:
+                if self.graph.nodes[edge[0]]['radius']+self.graph.nodes[edge[1]]['radius']>self.graph.edges[edge]['length']+1 and (len(self.graph[edge[0]])==1 or len(self.graph[edge[1]])==1):
                     self.merge_nodes(edge)
                     cont = True
                     break

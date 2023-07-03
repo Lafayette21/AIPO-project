@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import threading
 import networkx as nx
 import time
-from GraphPostProcessing import GraphPostProcessor
+from roadsIntersectionsDetecotr.GraphPostProcessing import GraphPostProcessor
+import math
+from dijkstra.Colors import get_combined_color_list
+from dijkstra.updateGraphLenth import update_edge_lengths
+from dijkstra.dijkstraAlghoritm import dijkstra
 
 #urzywa obraz o wartościach 0 dla tła i 1 dla drug i skrzyrzoań
 #zwraca obraz z osobną wartością dla karzdej drogi i skrzyrzoania oraz gotowy graf z odpowiednimi wartościami
@@ -126,13 +130,9 @@ class RoadsIntersectionsDetecotr:
                 else:
                     neighbours_values -= set(self.roads_list)
                     #jesśli pozostała tylko jedna wartość skrzyrzowania połączenie drogi do tego skrzyrzowania
-                    if len(neighbours_values) == 1:
-                        time.sleep(0.1)
-                        self.graph.add_edge(startNodeName, f"{list(neighbours_values)[0]}", length = road_length, area = road_area, color = [value])
-                    #jeśli pozostały inne wartości to nieobsługiwany narazie bład, pomiajny(nie powinien sie nigdy wydażyć)
-                    else:
-                        print(f"Detestion error on road {value} that starts from node{startNodeName}")
-                        print(neighbours_values)
+                    time.sleep(0.1)
+                    for neig in neighbours_values:
+                        self.graph.add_edge(startNodeName, f"{neig}", length = road_length, area = road_area, color = [value])
             #Jeśli brak wartości sąsiadów to znaczy że koniec drgoi, stworzenie nowego node będącego końcem drogi
             else:
                 pos, radius = self.color_intersection(neighbours.copy(), intersection_id)
@@ -235,103 +235,29 @@ class RoadsIntersectionsDetecotr:
         graphPostProcessor = GraphPostProcessor()
         self.graph = graphPostProcessor.run(self.graph)
 
-    def backup(self):
-        self.backup_graph=self.graph.copy()
-        self.backup_image=self.image.copy()
-        self.backup_iterator=self.iterator
+    #find nearest node to chosen point
+    def findNearestNode(self, point):
+        nearest_node = None
+        nearest_distance = float('inf')
 
-    def load_backup(self):
-        self.graph=self.backup_graph.copy()
-        self.image=self.backup_image.copy()
-        self.iterator=self.backup_iterator
+        for node in self.graph.nodes():
+            pos = self.graph.nodes[node].get('pos')
+            if pos is not None:
+                distance = math.dist(pos, point)
+                if distance < nearest_distance:
+                    nearest_distance = distance
+                    nearest_node = node
+
+        return nearest_node
     
-    def color_road(self, value):
-        self.roads_list.append(value)
-
-        #inicajlizacja urzywanych wartości do kreacji drogi
-        neighbors_lists=[[]]
-        road_end=False
-        road_length = 0
-        road_area = len(indexes)
-
-        #kolorowanie drogi do puki znajdą się niepokolorowane pixele drogi lub skrzyrzowanie
-        #skrzyrzowanie zostaje znalesione jeśji znaloziono wiecej niż jedną grupe sąsiadów
-        while len(neighbors_lists)==1:
-            indexes2 = set([])
-            for (x, y) in indexes:
-                self.image[x, y] = value
-                #snalezeinie wszystkich sąsiadów będących niepokolorowną drogą do aktualnie posiadanych punktów
-                indexes2.update(self.find_neighbors_with_value((x, y), 1))
-            if indexes2:
-                indexes = indexes2
-                #podzielenie sąsiadów na grpuy sąsiadów
-                neighbors_lists = self.divide_into_neighbor_lists(indexes)
-                road_length+=1
-                road_area+=len(indexes)
-            else: 
-                road_end = True
-                break      
-
-    def add_point_to_grpah(self, point):
-        roads_points = np.argwhere(self.image > 1)
-        distances = np.linalg.norm(roads_points - point, axis=1)
-        nearest_index = np.argmin(distances)
-        nearest_point = roads_points[nearest_index]
-        print(nearest_point)
-        value = self.image[tuple(nearest_point)]
-        # cv2.circle(self.image, (point[1],point[0]), 10, 100, thickness=-1)
-        cv2.circle(self.image, (nearest_point[1],nearest_point[0]), 10, 100, thickness=-1)
-
-        found_edge=None
-        for edge in self.graph.edges:
-            if value in self.graph.edges[edge]['color']:
-                found_edge=edge
-        
-        if found_edge:
-            self.graph.remove_edge(found_edge)
-
-
-
-        
-
-
-
-
-obraz = cv2.imread("roadsIntersectionsDetecotr/obraz2.png", 0)
-_, obraz = cv2.threshold(obraz, 128, 1, cv2.THRESH_BINARY)
-obraz = 1-obraz
-obraz2 = np.array(obraz)
-
-detector = RoadsIntersectionsDetecotr(obraz2)
-obraz2, graph = detector.run()
-
-plt.subplot(2,2,1)
-plt.imshow(obraz, cmap='gray')
-
-plt.subplot(2,2,2)
-node_positions = nx.get_node_attributes(graph, 'pos')
-nx.draw(graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
-
-for edge in graph.edges:
-    edge_length = graph.edges[edge]['color']
-    x = (node_positions[edge[0]][0] + node_positions[edge[1]][0]) / 2 
-    y = (node_positions[edge[0]][1] + node_positions[edge[1]][1]) / 2 
-    plt.text(x, y, str(edge_length), color='white', fontsize=10, ha='center', va='center')
-
-plt.imshow(obraz2, cmap='cubehelix')
-
-detector.postProces()
-detector.add_point_to_grpah((int(obraz.shape[0]/2),int(obraz.shape[1]/2)))
-
-plt.subplot(2,2,3)
-node_positions = nx.get_node_attributes(graph, 'pos')
-nx.draw(graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
-
-for edge in graph.edges:
-    edge_length = graph.edges[edge]['color']
-    x = (node_positions[edge[0]][0] + node_positions[edge[1]][0]) / 2 
-    y = (node_positions[edge[0]][1] + node_positions[edge[1]][1]) / 2
-    plt.text(x, y, str(edge_length), color='white', fontsize=10, ha='center', va='center')
-
-plt.imshow(obraz2, cmap='cubehelix')
-plt.show()
+    def draw_navigation(self, point1, point2, imagetodrow):
+        node1 = self.findNearestNode(point1)
+        node2 = self.findNearestNode(point2)
+        update_edge_lengths(self.graph)
+        shortest_distance, shortest_path, path_colors = dijkstra(self.graph, node1, node2)
+        combined_color_list = get_combined_color_list(self.graph, shortest_path, path_colors)
+        print(shortest_path)
+        print(combined_color_list)
+        mask = np.isin(self.image, combined_color_list)
+        imagetodrow[mask] = [0, 0, 255] 
+        return imagetodrow
