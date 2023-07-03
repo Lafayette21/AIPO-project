@@ -29,6 +29,9 @@ class Navigation:
         return image_pil
 
     def _draw_point(self, point: Point, drawer: ImageDraw):
-        drawer.ellipse(point.x - self.POINT_RADIUS, point.y - self.POINT_RADIUS,
-                       point.x + self.POINT_RADIUS, point.y + self.POINT_RADIUS,
-                       fill='red')
+        x1 = point.x - self.POINT_RADIUS
+        y1 = point.y - self.POINT_RADIUS
+        x2 = point.x + self.POINT_RADIUS
+        y2 = point.y + self.POINT_RADIUS
+        bounding_box = [(x1, y1), (x2, y2)]
+        drawer.ellipse(bounding_box, fill='red')
