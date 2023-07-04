@@ -1,6 +1,5 @@
-import numpy as np
-from matplotlib import pyplot as plt
 import cv2
+import numpy as np
 
 
 class Binarizer:
@@ -37,24 +36,25 @@ class Binarizer:
             image_cleared = np.where(image_cleared < 125, 0, image_cleared)
             image_cleared = np.where(image_cleared >= 125, 255, image_cleared)
         return image_cleared
-    
+
     def connect_lines(self, thresh):
-        lines = cv2.HoughLinesP(thresh, rho=1, theta=np.pi/180, threshold=30,
-                                    minLineLength=int(self.average_image_size * 0.15), maxLineGap=np.ceil((self.height + self.width) / 2 * 0.02))
+        lines = cv2.HoughLinesP(thresh, rho=1, theta=np.pi / 180, threshold=30,
+                                minLineLength=int(self.average_image_size * 0.15),
+                                maxLineGap=np.ceil((self.height + self.width) / 2 * 0.02))
         for line in lines:
-            cv2.line(thresh, (line[0][0], line[0][1]), (line[0][2],line[0][3]), (255,0,0), 1)
+            cv2.line(thresh, (line[0][0], line[0][1]), (line[0][2], line[0][3]), (255, 0, 0), 1)
         return thresh
 
     def fill_holes(self, bin_img):
-        scale_percent = 50 # percent of original size
+        scale_percent = 50  # percent of original size
         width = int(bin_img.shape[1] * scale_percent / 100)
         height = int(bin_img.shape[0] * scale_percent / 100)
         dim = (width, height)
-        
+
         # resize image
-        filtered_img = cv2.resize(bin_img, dim, interpolation = cv2.INTER_AREA)
+        filtered_img = cv2.resize(bin_img, dim, interpolation=cv2.INTER_AREA)
         dim = (bin_img.shape[1], bin_img.shape[0])
-        filtered_img = cv2.resize(filtered_img, dim, interpolation = cv2.INTER_AREA)
+        filtered_img = cv2.resize(filtered_img, dim, interpolation=cv2.INTER_AREA)
         filtered_img = cv2.cvtColor(filtered_img, cv2.COLOR_GRAY2BGR)
         filtered_img = cv2.detailEnhance(filtered_img, sigma_s=100, sigma_r=0.1)
         filtered_img = cv2.detailEnhance(filtered_img, sigma_s=200, sigma_r=0.1)
@@ -63,7 +63,7 @@ class Binarizer:
         filtered_img = cv2.cvtColor(filtered_img, cv2.COLOR_BGR2GRAY)
 
         return filtered_img
-    
+
     def binarize(self, image):
         self._setup(image)
         minVal, maxVal, imageWithCircle = self.find_brightest_region()
@@ -72,4 +72,3 @@ class Binarizer:
         binarized_image = self.connect_lines(binarized_image)
         binarized_image = self.fill_holes(binarized_image)
         return binarized_image
-

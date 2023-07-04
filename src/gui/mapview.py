@@ -1,20 +1,15 @@
-from tkinter import Button, messagebox, Frame, Canvas
+from tkinter import Button, Frame
+from tkinter import Canvas
+from tkinter import Menu
 
 import tkintermapview
-from PIL import ImageGrab, ImageTk
+from PIL import ImageGrab
+from PIL import ImageTk, ImageDraw
 
 from .navigation import Navigation
 from .point import Point
 from .point_constats import point_constants
-from tkinter import Canvas, filedialog
-from tkinter import Menu
-from tkinter import Tk, Button, Frame
-from tkinter.ttk import Notebook, Style
 
-from PIL import Image, ImageTk, ImageDraw
-
-from .navigation import Navigation
-from .point import Point
 
 class MapViewer(Frame):
     INITIALIZATION_POINT: Point = point_constants["Biłgoraj"]
@@ -34,14 +29,14 @@ class MapViewer(Frame):
         self.columnconfigure(1, weight=9)
         self.rowconfigure(0, weight=1)
 
-        self.button1 = Button(self, text='Make screenshot', command=self.make_screenshot)
-        self.button1.grid(row=0, column=0)
+        self.screenshot_button = Button(self, text='Make screenshot', command=self.make_screenshot)
+        self.screenshot_button.grid(row=0, column=0)
 
-        self.button2 = Button(self, text="Navigate", command=self.navigate_image)
+        self.navigation_button = Button(self, text="Navigate", command=self.navigate_image)
 
-        self.button3 = Button(self, text="Clear", command=self.clear_all_markers_on_image)
+        self.map_clearing_button = Button(self, text="Clear", command=self.clear_all_markers_on_image)
 
-        self.button4 = Button(self, text="Reset map", command=self.reset_map)
+        self.map_reset_button = Button(self, text="Reset map", command=self.reset_map)
 
         self.canvas = Canvas(self, width=900, height=600)
         self.canvas.grid(row=0, column=1, rowspan=3, sticky='nsew')
@@ -56,16 +51,16 @@ class MapViewer(Frame):
     def make_screenshot(self):
         zoomed = 3
         print(self.map_widget.zoom)
-        self.map_widget.set_zoom(self.map_widget.zoom-zoomed)
+        self.map_widget.set_zoom(self.map_widget.zoom - zoomed)
         print(self.map_widget.zoom)
         x = self.map_widget.winfo_rootx()
         y = self.map_widget.winfo_rooty()
         x1 = x + self.map_widget.winfo_width()
         y1 = y + self.map_widget.winfo_height()
 
-        padding=50
-        
-        screenshot = ImageGrab.grab((x+padding, y+padding, x1-padding, y1-padding))
+        padding = 50
+
+        screenshot = ImageGrab.grab((x + padding, y + padding, x1 - padding, y1 - padding))
 
         self.map_widget.grid_forget()
 
@@ -79,33 +74,31 @@ class MapViewer(Frame):
 
         self.image_on_canvas = self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
 
-        self.button1.grid_forget()
+        self.screenshot_button.grid_forget()
 
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
 
-        self.button2.grid(row=0, column=0)
-        self.button3.grid(row=1, column=0)
-        self.button4.grid(row=2, column=0)
+        self.navigation_button.grid(row=0, column=0)
+        self.map_clearing_button.grid(row=1, column=0)
+        self.map_reset_button.grid(row=2, column=0)
 
     def reset_map(self):
-        self.number_of_markers = 0
         self.map_widget = tkintermapview.TkinterMapView(self)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
         self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
 
-        self.button2.grid_forget()
-        self.button3.grid_forget()
-        self.button4.grid_forget()
+        self.navigation_button.grid_forget()
+        self.map_clearing_button.grid_forget()
+        self.map_reset_button.grid_forget()
 
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=0)
 
-        self.button1.grid(row=0, column=0)
+        self.screenshot_button.grid(row=0, column=0)
         self.startPoint, self.endPoint = None, None
-
 
     def right_click_image(self, event):
         x1, y1, x2, y2 = self.canvas.bbox(self.image_on_canvas)

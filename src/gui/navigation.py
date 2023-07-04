@@ -1,16 +1,17 @@
 import cv2
-from PIL import Image, ImageDraw
-import numpy as np
+import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
+from PIL import Image, ImageDraw
 from binarizer.binarizer import Binarizer
 from roadsIntersectionsDetecotr.RoadsIntersectionsDetecotr import RoadsIntersectionsDetecotr
-import matplotlib.pyplot as plt
+
 from .point import Point
 
 
 class Navigation:
     POINT_RADIUS: int = 10
-    debug = True
+    debug = False
 
     def __init__(self):
         self.binarizer = Binarizer()
@@ -23,7 +24,7 @@ class Navigation:
         if self.debug:
             cv2.imwrite('src/debug/binary.png', binary_image)
         _, binary_image = cv2.threshold(binary_image, 128, 1, cv2.THRESH_BINARY)
-        binary_image = np.array(binary_image,  dtype=np.int64  )
+        binary_image = np.array(binary_image, dtype=np.int64)
 
         detector = RoadsIntersectionsDetecotr(binary_image)
         detector.run()
@@ -32,7 +33,7 @@ class Navigation:
             graph = detector.graph
             node_positions = nx.get_node_attributes(graph, 'pos')
             plt.figure(figsize=(8, 6))
-            nx.draw(graph, pos=node_positions, with_labels=True,  width=2.0, edge_color='red')
+            nx.draw(graph, pos=node_positions, with_labels=True, width=2.0, edge_color='red')
             plt.savefig('src/debug/image_graph.png')
             plt.close()
 
@@ -54,7 +55,7 @@ class Navigation:
         image_rgb = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
         image_pil = Image.fromarray(image_rgb)
         return image_pil
-    
+
     def _convert_to_cv(self, image_pil):
         return cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
 

@@ -1,4 +1,4 @@
-from gui.point import Point
+from .point import Point
 
 point_constants: dict = {
     "Warsaw": Point(52.2297700, 21.0117800),

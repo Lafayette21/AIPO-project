@@ -5,5 +5,5 @@ def update_edge_lengths(graph):
         if edge_length == 0:
             updated_length = 0
         else:
-            updated_length = edge_length / (0.1 * edge_area / (edge_length+1))
+            updated_length = edge_length / (0.1 * edge_area / (edge_length + 1))
         graph[u][v]['length'] = updated_length

@@ -2,8 +2,8 @@ import networkx as nx
 
 # Tworzenie grafu
 from src.dijkstra.Colors import get_combined_color_list
-from src.dijkstra.updateGraphLenth import update_edge_lengths
 from src.dijkstra.dijkstraAlghoritm import dijkstra
+from src.dijkstra.updateGraphLenth import update_edge_lengths
 
 graph = nx.Graph()
 
