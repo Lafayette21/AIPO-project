@@ -1,6 +1,4 @@
-from tkinter import Canvas, filedialog
-from tkinter import Menu
-from tkinter import Tk, Button, Frame
+from tkinter import Menu, Canvas, Tk, Button, Frame, filedialog, messagebox
 from tkinter.ttk import Notebook, Style
 
 from PIL import Image, ImageTk, ImageDraw
@@ -12,8 +10,8 @@ from .point import Point
 
 class Application(Tk):
     frame2: Frame
-    startPoint: Point = None
-    endPoint: Point = None
+    start_point: Point = None
+    end_point: Point = None
 
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
@@ -54,12 +52,14 @@ class Application(Tk):
         self.photo = None
 
     def navigate_image(self):
-        if self.startPoint is not None and self.endPoint is not None:
-            self.image_copy = self.navigation.navigate(self.original_image, self.startPoint, self.endPoint)
+        if self.start_point is not None and self.end_point is not None:
+            print(f"Started navigation from {self.start_point} to {self.end_point}")
+            self.image_copy = self.navigation.navigate(self.original_image, self.start_point, self.end_point)
             self.photo = ImageTk.PhotoImage(self.image_copy)
             self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
         else:
-            print("Error")
+            print("Both points are not set")
+            messagebox.showerror("Error", "Both points are not set")
 
     def upload_image(self):
         filepath = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png")])
@@ -68,7 +68,7 @@ class Application(Tk):
             self.original_image = Image.open(filepath)
             self.image_copy = Image.open(filepath)
             self.photo = ImageTk.PhotoImage(self.original_image)
-            self.startPoint, self.endPoint = None, None
+            self.start_point, self.end_point = None, None
             if self.image_on_canvas:
                 self.canvas.delete(self.image_on_canvas)
             self.image_on_canvas = self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
@@ -83,9 +83,9 @@ class Application(Tk):
 
         popup = Menu(self, tearoff=0)
 
-        if self.startPoint is not None and self.endPoint is None:
+        if self.start_point is not None and self.end_point is None:
             popup.add_command(label="End", command=self.set_end_marker_on_image)
-        elif self.startPoint is None and self.endPoint is None:
+        elif self.start_point is None and self.end_point is None:
             popup.add_command(label="Start", command=self.set_begin_marker_on_image)
 
         try:
@@ -94,14 +94,15 @@ class Application(Tk):
             popup.grab_release()
 
     def clear_all_markers_on_image(self) -> None:
+        print("All markers cleared")
         self.image_copy = self.original_image.copy()
         self.photo = ImageTk.PhotoImage(self.original_image)
         self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
-        self.startPoint, self.endPoint = None, None
+        self.start_point, self.end_point = None, None
 
     def set_begin_marker_on_image(self):
-        self.startPoint = Point(self.relative_x, self.relative_y)
-        print(f"Right click on the image at: {self.relative_x}, {self.relative_y}")
+        self.start_point = Point(self.relative_x, self.relative_y)
+        print(f"Start point set at: {self.start_point}")
         radius = 10
         draw = ImageDraw.Draw(self.image_copy)
         draw.ellipse(
@@ -112,8 +113,8 @@ class Application(Tk):
         self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
 
     def set_end_marker_on_image(self):
-        self.endPoint = Point(self.relative_x, self.relative_y)
-        print(f"Right click on the image at: {self.relative_x}, {self.relative_y}")
+        self.end_point = Point(self.relative_x, self.relative_y)
+        print(f"End point set at: {self.end_point}")
         radius = 10
         draw = ImageDraw.Draw(self.image_copy)
         draw.ellipse(

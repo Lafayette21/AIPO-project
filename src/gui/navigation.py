@@ -11,17 +11,17 @@ from .point import Point
 
 class Navigation:
     POINT_RADIUS: int = 10
-    debug = False
+    debug_mode = False
 
     def __init__(self):
         self.binarizer = Binarizer()
 
     def navigate(self, image, start_point: Point, end_point: Point):
-        if self.debug:
+        if self.debug_mode:
             image.save('src/debug/original.png')
         image = self._convert_to_cv(image)
         binary_image = self.binarizer.binarize(image)
-        if self.debug:
+        if self.debug_mode:
             cv2.imwrite('src/debug/binary.png', binary_image)
         _, binary_image = cv2.threshold(binary_image, 128, 1, cv2.THRESH_BINARY)
         binary_image = np.array(binary_image,  dtype=np.int32)
@@ -29,7 +29,7 @@ class Navigation:
         detector = RoadsIntersectionsDetecotr(binary_image)
         detector.run()
 
-        if self.debug:
+        if self.debug_mode:
             graph = detector.graph
             node_positions = nx.get_node_attributes(graph, 'pos')
             plt.figure(figsize=(8, 6))
@@ -46,7 +46,7 @@ class Navigation:
         self._draw_point(start_point, drawer)
         self._draw_point(end_point, drawer)
 
-        if self.debug:
+        if self.debug_mode:
             output_image_pil.save('src/debug/output.png')
 
         return output_image_pil
