@@ -59,7 +59,7 @@ class MapViewer(Frame):
 
     def capture_screenshot(self):
         x = self.map_widget.winfo_rootx()
-        y = self.map_widget.winfo_rooty() + 115
+        y = self.map_widget.winfo_rooty() + 130
         x1 = x + self.map_widget.winfo_width()
         y1 = y + self.map_widget.winfo_height()
 
