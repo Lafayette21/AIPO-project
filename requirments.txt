@@ -1,2 +1,6 @@
 tk
 tkintermapview
+Pillow
+opencv-python
+networkx
+numpy
