@@ -54,12 +54,18 @@ class MapViewer(Frame):
         self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
 
     def make_screenshot(self):
+        zoomed = 3
+        print(self.map_widget.zoom)
+        self.map_widget.set_zoom(self.map_widget.zoom-zoomed)
+        print(self.map_widget.zoom)
         x = self.map_widget.winfo_rootx()
         y = self.map_widget.winfo_rooty()
         x1 = x + self.map_widget.winfo_width()
         y1 = y + self.map_widget.winfo_height()
 
-        screenshot = ImageGrab.grab((x, y, x1, y1))
+        padding=50
+        
+        screenshot = ImageGrab.grab((x+padding, y+padding, x1-padding, y1-padding))
 
         self.map_widget.grid_forget()
 
