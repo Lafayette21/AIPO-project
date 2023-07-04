@@ -8,7 +8,7 @@ class Point:
         self.__init__(0, 0)
 
     def as_tuple(self):
-        return(self.x,self.y)    
+        return (self.x, self.y)
 
     def __str__(self):
         return f"Point: x={self.x}, y={self.y}"
