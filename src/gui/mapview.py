@@ -59,7 +59,7 @@ class MapViewer(Frame):
 
     def capture_screenshot(self):
         x = self.map_widget.winfo_rootx()
-        y = self.map_widget.winfo_rooty() + 130
+        y = self.map_widget.winfo_rooty()
         x1 = x + self.map_widget.winfo_width()
         y1 = y + self.map_widget.winfo_height()
 
@@ -103,7 +103,7 @@ class MapViewer(Frame):
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=0)
 
-        self.screenshot_button.grid(row=0, column=0)
+        self.screenshot_button.grid(row=0, column=0, sticky='n', pady=30)
         self.start_point, self.end_point = None, None
 
     def right_click_image(self, event):
