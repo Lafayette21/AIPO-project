@@ -1,4 +1,4 @@
-from tkinter import Menu, Canvas, Button, Frame, messagebox
+from tkinter import Menu, Canvas, Button, Frame, messagebox, font
 
 import tkintermapview
 from PIL import ImageGrab
@@ -10,7 +10,8 @@ from .point_constats import point_constants
 
 
 class MapViewer(Frame):
-    RADIUS = 10
+    RADIUS: int = 10
+    BUTTON_FONT_SIZE: int = 12
     INITIALIZATION_POINT: Point = point_constants["Biłgoraj"]
 
     map_widget: tkintermapview.TkinterMapView
@@ -28,14 +29,18 @@ class MapViewer(Frame):
         self.columnconfigure(1, weight=9)
         self.rowconfigure(0, weight=1)
 
-        self.screenshot_button = Button(self, text='Make screenshot', command=self.make_screenshot)
-        self.screenshot_button.grid(row=0, column=0)
+        self.screenshot_button = Button(self, text='Make screenshot', command=self.make_screenshot, padx=4, pady=4,
+                                        font=font.Font(size=self.BUTTON_FONT_SIZE))
+        self.screenshot_button.grid(row=0, column=0, sticky='n', pady=30)
 
-        self.navigation_button = Button(self, text="Navigate", command=self.navigate_image)
+        self.navigation_button = Button(self, text="Navigate", command=self.navigate_image, padx=4, pady=4,
+                                        font=font.Font(size=self.BUTTON_FONT_SIZE))
 
-        self.map_clearing_button = Button(self, text="Clear", command=self.clear_all_markers_on_image)
+        self.map_clearing_button = Button(self, text="Clear", command=self.clear_all_markers_on_image, padx=4, pady=4,
+                                          font=font.Font(size=self.BUTTON_FONT_SIZE))
 
-        self.map_reset_button = Button(self, text="Reset map", command=self.reset_map)
+        self.map_reset_button = Button(self, text="Reset map", command=self.reset_map, padx=4, pady=4,
+                                       font=font.Font(size=self.BUTTON_FONT_SIZE))
 
         self.canvas = Canvas(self, width=900, height=600)
         self.canvas.grid(row=0, column=1, rowspan=3, sticky='nsew')
@@ -54,7 +59,7 @@ class MapViewer(Frame):
 
     def capture_screenshot(self):
         x = self.map_widget.winfo_rootx()
-        y = self.map_widget.winfo_rooty()
+        y = self.map_widget.winfo_rooty() + 115
         x1 = x + self.map_widget.winfo_width()
         y1 = y + self.map_widget.winfo_height()
 
@@ -80,9 +85,9 @@ class MapViewer(Frame):
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
 
-        self.navigation_button.grid(row=0, column=0)
-        self.map_clearing_button.grid(row=1, column=0)
-        self.map_reset_button.grid(row=2, column=0)
+        self.navigation_button.grid(row=0, column=0, sticky='n', pady=30)
+        self.map_clearing_button.grid(row=1, column=0, sticky='n', pady=30)
+        self.map_reset_button.grid(row=2, column=0, sticky='n', pady=30)
 
     def reset_map(self):
         print(f"Map restored to default position: {self.INITIALIZATION_POINT}")

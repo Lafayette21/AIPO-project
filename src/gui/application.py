@@ -1,4 +1,4 @@
-from tkinter import Menu, Canvas, Tk, Button, Frame, filedialog, messagebox
+from tkinter import Menu, Canvas, Tk, Button, Frame, filedialog, messagebox, font
 from tkinter.ttk import Notebook, Style
 
 from PIL import Image, ImageTk, ImageDraw
@@ -9,6 +9,8 @@ from .point import Point
 
 
 class Application(Tk):
+    BUTTON_FONT_SIZE: int = 12
+
     frame2: Frame
     start_point: Point = None
     end_point: Point = None
@@ -36,14 +38,17 @@ class Application(Tk):
         self.frame2.rowconfigure(1, weight=1)
         self.frame2.rowconfigure(2, weight=1)
 
-        self.button4 = Button(self.frame2, text='Navigate', command=self.navigate_image)
-        self.button4.grid(row=0, column=0)
+        self.button4 = Button(self.frame2, text='Navigate', command=self.navigate_image, padx=4, pady=4,
+                              font=font.Font(size=self.BUTTON_FONT_SIZE))
+        self.button4.grid(row=0, column=0, sticky='n', pady=30)
 
-        self.button5 = Button(self.frame2, text="Clear", command=self.clear_all_markers_on_image)
-        self.button5.grid(row=1, column=0)
+        self.button5 = Button(self.frame2, text="Clear", command=self.clear_all_markers_on_image, padx=4, pady=4,
+                              font=font.Font(size=self.BUTTON_FONT_SIZE))
+        self.button5.grid(row=1, column=0, sticky='n', pady=30)
 
-        self.button6 = Button(self.frame2, text="Upload", command=self.upload_image)
-        self.button6.grid(row=2, column=0)
+        self.button6 = Button(self.frame2, text="Upload", command=self.upload_image, padx=4, pady=4,
+                              font=font.Font(size=self.BUTTON_FONT_SIZE))
+        self.button6.grid(row=2, column=0, sticky='n', pady=30)
 
         self.canvas = Canvas(self.frame2, width=600, height=400)
         self.canvas.grid(row=0, column=1, rowspan=3, sticky='nsew')
