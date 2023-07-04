@@ -6,15 +6,22 @@ from PIL import ImageGrab, ImageTk
 from .navigation import Navigation
 from .point import Point
 from .point_constats import point_constants
+from tkinter import Canvas, filedialog
+from tkinter import Menu
+from tkinter import Tk, Button, Frame
+from tkinter.ttk import Notebook, Style
 
+from PIL import Image, ImageTk, ImageDraw
+
+from .navigation import Navigation
+from .point import Point
 
 class MapViewer(Frame):
-    INITIALIZATION_POINT: Point = point_constants["Cracow"]
+    INITIALIZATION_POINT: Point = point_constants["Biłgoraj"]
 
     map_widget: tkintermapview.TkinterMapView
-    begin_point: Point
-    end_point: Point
-    number_of_markers: int = 0
+    startPoint: Point = None
+    endPoint: Point = None
 
     navigation: Navigation = Navigation()
 
@@ -23,75 +30,129 @@ class MapViewer(Frame):
         self._initialise()
 
     def _initialise(self) -> None:
-        self.__initialize_map_widget()
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=9)
+        self.rowconfigure(0, weight=1)
 
-        find_navigation_button = Button(self, text="Navigate", command=self.create_route)
-        find_navigation_button.grid(row=0, column=0)
+        self.button1 = Button(self, text='Make screenshot', command=self.make_screenshot)
+        self.button1.grid(row=0, column=0)
 
-        clear_markers_button = Button(self, text="Clear markers", command=self.clear_all_markers)
-        clear_markers_button.grid(row=1, column=0)
+        self.button2 = Button(self, text="Navigate", command=self.navigate_image)
 
-        reset_map_button = Button(self, text='Reset map', command=self.reset_map)
-        reset_map_button.grid(row=2, column=0)
+        self.button3 = Button(self, text="Clear", command=self.clear_all_markers_on_image)
 
-    def __initialize_map_widget(self):
-        self.map_widget = tkintermapview.TkinterMapView(self, width=900, height=600)
+        self.button4 = Button(self, text="Reset map", command=self.reset_map)
+
+        self.canvas = Canvas(self, width=900, height=600)
+        self.canvas.grid(row=0, column=1, rowspan=3, sticky='nsew')
+        self.canvas.bind("<Button-3>", self.right_click_image)
+        self.image_on_canvas = None
+        self.photo = None
+
+        self.map_widget = tkintermapview.TkinterMapView(self)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
-        self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker,
-                                                     pass_coords=True)
-        self.map_widget.grid(row=0, column=1, rowspan=10)
+        self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
 
-    @staticmethod
-    def __get_90_percent_of(value: int) -> int:
-        return int(0.9 * value)
+    def make_screenshot(self):
+        x = self.map_widget.winfo_rootx()
+        y = self.map_widget.winfo_rooty()
+        x1 = x + self.map_widget.winfo_width()
+        y1 = y + self.map_widget.winfo_height()
 
-    def clear_all_markers(self) -> None:
-        print("All markers cleared")
-        self.number_of_markers = 0
-        self.map_widget.delete_all_marker()
-        self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker,
-                                                     pass_coords=True)
+        screenshot = ImageGrab.grab((x, y, x1, y1))
 
-    def set_begin_marker(self, coords):
-        print("Add begin marker:", coords)
-        self.map_widget.set_marker(coords[0], coords[1], text="Begin marker")
-        self.begin_point = Point(*coords)
-        self.number_of_markers += 1
-        self.map_widget.right_click_menu_commands.clear()
-        self.map_widget.add_right_click_menu_command(label="Add end marker", command=self.set_end_marker,
-                                                     pass_coords=True)
+        self.map_widget.grid_forget()
 
-    def set_end_marker(self, coords):
-        print("Add end marker:", coords)
-        self.map_widget.set_marker(coords[0], coords[1], text="End marker")
-        self.end_point = Point(*coords)
-        self.number_of_markers += 1
-        self.map_widget.right_click_menu_commands.clear()
+        self.photo = ImageTk.PhotoImage(screenshot)
 
-    def create_route(self):
-        if self.number_of_markers == 2:
-            x = self.map_widget.winfo_rootx()
-            y = self.map_widget.winfo_rooty()
-            x1 = x + self.map_widget.winfo_width()
-            y1 = y + self.map_widget.winfo_height()
+        if self.image_on_canvas:
+            self.canvas.delete(self.image_on_canvas)
 
-            output_image = ImageGrab.grab().crop((x, y, x1, y1))
-            output_image = self.navigation.navigate(output_image, self.begin_point, self.end_point)
+        self.original_image = screenshot.copy()
+        self.image_copy = screenshot.copy()
 
-            self.map_widget.grid_forget()
+        self.image_on_canvas = self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
 
-            output_photo = ImageTk.PhotoImage(output_image)
-            canvas1 = Canvas(self, width=self.map_widget.width, height=self.map_widget.height)
-            canvas1.create_image(0, 0, anchor='nw', image=output_photo)
-            canvas1.grid(row=0, column=1, rowspan=10, sticky='nsew')
-        else:
-            messagebox.showerror(title="Error", message="You have not selected both points for creating navigation")
+        self.button1.grid_forget()
+
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+
+        self.button2.grid(row=0, column=0)
+        self.button3.grid(row=1, column=0)
+        self.button4.grid(row=2, column=0)
 
     def reset_map(self):
-        print(f"Map is now at beginning point: {self.INITIALIZATION_POINT}")
         self.number_of_markers = 0
         self.map_widget = tkintermapview.TkinterMapView(self)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
-        self.map_widget.add_right_click_menu_command(label="Add begin marker", command=self.set_begin_marker,
-                                                     pass_coords=True)
         self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
+
+        self.button2.grid_forget()
+        self.button3.grid_forget()
+        self.button4.grid_forget()
+
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=0)
+        self.rowconfigure(2, weight=0)
+
+        self.button1.grid(row=0, column=0)
+        self.startPoint, self.endPoint = None, None
+
+
+    def right_click_image(self, event):
+        x1, y1, x2, y2 = self.canvas.bbox(self.image_on_canvas)
+
+        self.relative_x = event.x - x1
+        self.relative_y = event.y - y1
+
+        popup = Menu(self, tearoff=0)
+
+        if self.startPoint is not None and self.endPoint is None:
+            popup.add_command(label="End", command=self.set_end_marker_on_image)
+        elif self.startPoint is None and self.endPoint is None:
+            popup.add_command(label="Start", command=self.set_begin_marker_on_image)
+
+        try:
+            popup.tk_popup(event.x_root, event.y_root, 0)
+        finally:
+            popup.grab_release()
+
+    def clear_all_markers_on_image(self) -> None:
+        self.image_copy = self.original_image.copy()
+        self.photo = ImageTk.PhotoImage(self.original_image)
+        self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
+        self.startPoint, self.endPoint = None, None
+
+    def set_begin_marker_on_image(self):
+        self.startPoint = Point(self.relative_x, self.relative_y)
+        print(f"Right click on the image at: {self.relative_x}, {self.relative_y}")
+        radius = 10
+        draw = ImageDraw.Draw(self.image_copy)
+        draw.ellipse(
+            (self.relative_x - radius, self.relative_y - radius, self.relative_x + radius, self.relative_y + radius),
+            fill='yellow')
+
+        self.photo = ImageTk.PhotoImage(self.image_copy)
+        self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
+
+    def set_end_marker_on_image(self):
+        self.endPoint = Point(self.relative_x, self.relative_y)
+        print(f"Right click on the image at: {self.relative_x}, {self.relative_y}")
+        radius = 10
+        draw = ImageDraw.Draw(self.image_copy)
+        draw.ellipse(
+            (self.relative_x - radius, self.relative_y - radius, self.relative_x + radius, self.relative_y + radius),
+            fill='green')
+
+        self.photo = ImageTk.PhotoImage(self.image_copy)
+        self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
+
+    def navigate_image(self):
+        if self.startPoint is not None and self.endPoint is not None:
+            self.image_copy = self.navigation.navigate(self.original_image, self.startPoint, self.endPoint)
+            self.photo = ImageTk.PhotoImage(self.image_copy)
+            self.canvas.itemconfig(self.image_on_canvas, image=self.photo)
+        else:
+            print("Error")
