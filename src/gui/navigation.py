@@ -23,7 +23,7 @@ class Navigation:
         if self.debug:
             cv2.imwrite('src/debug/binary.png', binary_image)
         _, binary_image = cv2.threshold(binary_image, 128, 1, cv2.THRESH_BINARY)
-        binary_image = np.array(binary_image,  dtype=np.int64  )
+        binary_image = np.array(binary_image,  dtype=np.int32)
 
         detector = RoadsIntersectionsDetecotr(binary_image)
         detector.run()

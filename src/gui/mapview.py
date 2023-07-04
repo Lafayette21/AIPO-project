@@ -52,12 +52,13 @@ class MapViewer(Frame):
         self.map_widget = tkintermapview.TkinterMapView(self)
         self.map_widget.set_position(self.INITIALIZATION_POINT.x, self.INITIALIZATION_POINT.y)
         self.map_widget.grid(row=0, column=1, rowspan=10, sticky='nsew')
-
+        
     def make_screenshot(self):
-        zoomed = 3
-        print(self.map_widget.zoom)
-        self.map_widget.set_zoom(self.map_widget.zoom-zoomed)
-        print(self.map_widget.zoom)
+        zoomed = -0.2
+        self.map_widget.set_zoom(self.map_widget.zoom + zoomed)
+        self.after(2000, self.capture_screenshot)
+
+    def capture_screenshot(self):
         x = self.map_widget.winfo_rootx()
         y = self.map_widget.winfo_rooty()
         x1 = x + self.map_widget.winfo_width()

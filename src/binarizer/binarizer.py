@@ -64,6 +64,13 @@ class Binarizer:
 
         return filtered_img
     
+    def dilate(self, bin_img):
+        kernel = np.array([[0.25,1,0.25],
+                        [1,0.25,1],
+                        [0.25,1,0.25]])
+        img_dilation = cv2.dilate(bin_img, kernel, iterations=1)
+        return img_dilation
+    
     def binarize(self, image):
         self._setup(image)
         minVal, maxVal, imageWithCircle = self.find_brightest_region()
@@ -71,5 +78,5 @@ class Binarizer:
         binarized_image = self.denoise(binarized_image)
         binarized_image = self.connect_lines(binarized_image)
         binarized_image = self.fill_holes(binarized_image)
+        binarized_image = self.dilate(binarized_image)
         return binarized_image
-
