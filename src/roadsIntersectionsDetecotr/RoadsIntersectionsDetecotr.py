@@ -262,5 +262,5 @@ class RoadsIntersectionsDetecotr:
         print(shortest_path)
         print(combined_color_list)
         mask = np.isin(self.image, combined_color_list)
-        imagetodrow[mask] = [0, 0, 255]
+        imagetodrow[mask] = [255, 0, 0]
         return imagetodrow

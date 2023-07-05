@@ -39,7 +39,7 @@ class Navigation:
 
         image_to_drow = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         new_image = detector.draw_navigation(start_point.as_tuple(), end_point.as_tuple(), image_to_drow)
-
+        new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
         output_image_pil = self._convert_to_pil(new_image)
 
         drawer = ImageDraw.Draw(output_image_pil)
