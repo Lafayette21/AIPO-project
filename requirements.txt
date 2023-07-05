@@ -1,0 +1,6 @@
+Pillow==10.0.0
+tkintermapview==1.29
+opencv-python==4.8.0.74
+numpy==1.25.0
+matplotlib==3.7.1
+networkx==3.1
